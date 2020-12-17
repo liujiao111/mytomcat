@@ -12,11 +12,12 @@ import pojo.Response;
  */
 public abstract class HttpServlet implements Servlet{
 
-  public abstract void doGet(Request request, Response response) throws IOException;
+  public abstract void doGet(Request request, Response response)
+      throws IOException, InterruptedException;
 
   public abstract void doPost(Request request, Response response) throws IOException;
 
-  public void service(Request request, Response response) throws IOException {
+  public void service(Request request, Response response) throws IOException, InterruptedException {
     if("GET".equals(request.getMethod())){
       doGet(request, response);
     } else {

@@ -13,7 +13,7 @@ import pojo.Response;
 public interface Servlet {
   void init(Request request, Response response);
 
-  void service(Request request, Response response) throws IOException;
+  void service(Request request, Response response) throws IOException, InterruptedException;
 
   void destroy(Request request, Response response);
 }

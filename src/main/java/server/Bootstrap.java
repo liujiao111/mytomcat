@@ -8,6 +8,13 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
@@ -29,9 +36,32 @@ public class Bootstrap {
 
   private Map<String, Object> servletMap = new HashMap<String, Object>(); //存放url与servlet的对应关系
 
+  private static ThreadPoolExecutor threadPoolExecutor;
+  static {
+    /**
+     * 初始化线程池
+     */
+      int corePoolSize = 10;
+      int maximumPoolSize = 50;
+      long keepAliveTime = 100L;
+      TimeUnit unit = TimeUnit.SECONDS;
+      BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue(50);
+      ThreadFactory threadFactory = Executors.defaultThreadFactory();
+      RejectedExecutionHandler handler = new ThreadPoolExecutor.AbortPolicy();
+      threadPoolExecutor = new ThreadPoolExecutor(
+          corePoolSize,
+          maximumPoolSize,
+          keepAliveTime,
+          unit,
+          workQueue,
+          threadFactory,
+          handler
+      );
+  }
 
 
-  public void start() throws IOException {
+
+  public void start() throws IOException, InterruptedException {
     //省略读取server.xml中的配置信息
     ServerSocket serverSocket = new ServerSocket(port);
     System.out.println("minicat start on port:" + port);
@@ -82,9 +112,9 @@ public class Bootstrap {
       e.printStackTrace();
     }
 
-
-    while (true) {
+    /*while (true) {
       Socket accept = serverSocket.accept();
+
       InputStream inputStream = accept.getInputStream();
       OutputStream outputStream = accept.getOutputStream();
 
@@ -104,9 +134,29 @@ public class Bootstrap {
 
       accept.close();
     }
+*/
 
+    /**
+     * minicat4.0版本-使用多线程改造项目
+     */
+    /*while (true) {
+      Socket accept = serverSocket.accept();
+      RequestProcessor requestProcessor = new RequestProcessor(accept, servletMap);
+      requestProcessor.start();
+    }*/
+
+    /**
+     * minicat5.0版本-使用线程池改造项目
+     */
+    while (true) {
+      Socket accept = serverSocket.accept();
+      RequestProcessor requestProcessor = new RequestProcessor(accept, servletMap);
+      threadPoolExecutor.execute(requestProcessor);
+    }
 
   }
+
+
 
   /**
    * 加载配置的Servlet
@@ -136,7 +186,7 @@ public class Bootstrap {
     }
   }
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException, InterruptedException {
     Bootstrap bootstrap = new Bootstrap();
     bootstrap.start();
   }

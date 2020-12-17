@@ -14,8 +14,9 @@ import util.HttpProtocolUtil;
  */
 public class MyServlet extends HttpServlet {
 
-  public void doGet(Request request, Response response) throws IOException {
+  public void doGet(Request request, Response response) throws IOException, InterruptedException {
     System.out.println("MiniCat GET请求");
+    Thread.sleep(10343434);
     String text = "<h1>MiniCat GET请求</h1>";
     String responseText = HttpProtocolUtil.get200HttpHeader(text.getBytes().length) + text;
     response.output(responseText);
