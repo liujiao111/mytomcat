@@ -45,9 +45,9 @@ public class Response {
 
   /**
    * 向页面输出内容
-   * @param httpHeader404
+   * @param text
    */
-  private void output(String text) throws IOException {
+  public void output(String text) throws IOException {
     outputStream.write(text.getBytes());
   }
 }
