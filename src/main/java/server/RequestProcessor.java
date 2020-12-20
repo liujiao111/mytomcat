@@ -18,14 +18,14 @@ public class RequestProcessor extends Thread {
 
   private Socket socket;
 
+  private Map<String, Context> servletMap;
 
-  private Map<String, Object> servletMap;
 
-
-  public RequestProcessor(Socket socket, Map<String, Object> servletMap) {
+  public RequestProcessor(Socket socket, Map<String, Context> servletMap) {
     this.socket = socket;
     this.servletMap = servletMap;
   }
+
 
   @Override
   public void run() {
@@ -34,17 +34,29 @@ public class RequestProcessor extends Thread {
       inputStream = socket.getInputStream();
       OutputStream outputStream = socket.getOutputStream();
 
-      Request request = new Request(inputStream);
+      Request request = new Request(inputStream); ///demo1/demo1
 
       Response response = new Response(outputStream);
 
       String url = request.getUrl();
       if(servletMap.containsKey(url)) {
         //请求的是动态资源
-        HttpServlet httpServlet = (HttpServlet) servletMap.get(url);
+        Context context = servletMap.get(url);
+        HttpServlet httpServlet = context.getHttpServlet();
         httpServlet.service(request, response);
       } else {
         //静态资源
+        String url1 = request.getUrl();
+        for(String key : servletMap.keySet()){
+          String s = "/" + key.split("/")[1];
+          System.out.println(s);
+          if(url1.startsWith(s)) {
+            String webappPath = servletMap.get(key).getWebappPath();
+            String staticPath = webappPath + "/" + request.getUrl().split("/")[request.getUrl().split("/").length-1];
+            response.outputHtml(staticPath);
+          }
+        }
+        //404
         response.outputHtml(request.getUrl());
       }
 
@@ -55,5 +67,11 @@ public class RequestProcessor extends Thread {
       e.printStackTrace();
     }
 
+  }
+
+  public static void main(String[] args) {
+    String url = "/demo1/index.html";
+    String s = url.split("/")[url.split("/").length - 1];
+    System.out.println(s);
   }
 }
